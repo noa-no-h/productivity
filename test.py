@@ -1,87 +1,97 @@
-#!/usr/bin/env pythonw
+import tkinter as tk
+from tkinter import ttk
+from datetime import datetime, timedelta
+import threading
 
-from Cocoa import NSObject, NSApplication, NSApp, NSWindow, NSButton, NSSound, NSFontManager, NSTextField, \
-    NSTextFieldSquareBezel, NSFont
-from PyObjCTools import AppHelper
+def newActivity():
+    text_value = text_field.get()
+    minutes = int(number_field.get())
 
-class AlwaysOnTopApp(NSObject):
-    def applicationDidFinishLaunching_(self, aNotification):
-        print("Hello, World!")
+    formatted_time_start = datetime.now().strftime("%H:%M")
+    time_end = datetime.now() + timedelta(minutes=minutes)
+    formatted_time_end = time_end.strftime("%H:%M")
 
-    def newActivity_(self, sender):
-        print("New Activity button clicked!")
+    result_field.config(state=tk.NORMAL)
+    result_field.delete("1.0", tk.END)
+    result_field.insert(tk.END, f"{text_value} {minutes} minutes.\nStarted {formatted_time_start}. Ends {formatted_time_end}")
+    result_field.config(state=tk.DISABLED)
 
-        # Create text field for text entry
-        text_field = NSTextField.alloc().initWithFrame_(((10.0, 100.0), (100.0, 22.0)))
-        text_field.setBezelStyle_(NSTextFieldSquareBezel)
-        text_field.setPlaceholderString_("Enter text")
-        text_field.setFont_(NSFont.fontWithName_size_("Garamond", 14))
-        text_field.setEditable_(True)
-        text_field.setSelectable_(True)
-        text_field.setBordered_(True)
-        text_field.setBezeled_(True)
+    # Create and start the countdown and countup threads. threads run these simultaneously
+    countdown_thread = threading.Thread(target=countdown, args=(minutes,))
+    countup_thread = threading.Thread(target=countup)
+    countdown_thread.start()
+    countup_thread.start()
 
-        # Create text field for number entry
-        number_field = NSTextField.alloc().initWithFrame_(((120.0, 100.0), (60.0, 22.0)))
-        number_field.setBezelStyle_(NSTextFieldSquareBezel)
-        number_field.setPlaceholderString_("Enter number")
-        number_field.setFont_(NSFont.fontWithName_size_("Garamond", 14))
-        number_field.setEditable_(True)
-        number_field.setSelectable_(True)
-        number_field.setBordered_(True)
-        number_field.setBezeled_(True)
+    text_field.delete(0, tk.END)
+    number_field.delete(0, tk.END)
+    text_field.focus_set()
 
-        self.win.contentView().addSubview_(text_field)
-        self.win.contentView().addSubview_(number_field)
+def countdown(minutes):
+    seconds = 0
+    timer_field.config(text=f"{minutes:02d}:{seconds:02d}")  # Set initial value
+    while minutes >= 0:
+        timer_field.config(text=f"{minutes:02d}:{seconds:02d}")
+        window.update()
+        if seconds == 0:
+            if minutes == 0:
+                break
+            minutes -= 1
+            seconds = 59
+        else:
+            seconds -= 1
+        window.after(1000)
 
-        text_field.becomeFirstResponder()
-
-    def quitApp_(self, sender):
-        NSApp().terminate_(sender)
-
-
-def main():
-    app = NSApplication.sharedApplication()
-    delegate = AlwaysOnTopApp.alloc().init()
-    NSApp().setDelegate_(delegate)
-
-    win = NSWindow.alloc()
-    frame = ((200.0, 300.0), (250.0, 160.0))
-    win.initWithContentRect_styleMask_backing_defer_(frame, 15, 2, 0)
-    win.setTitle_("AlwaysOnTopApp")
-    win.setLevel_(3)  # floating window
-
-    delegate.win = win  # Set win as an attribute of the delegate
-    
-    new_activity = NSButton.alloc().initWithFrame_(((10.0, 10.0), (230.0, 25.0)))
-    win.contentView().addSubview_(new_activity)
-    new_activity.setBezelStyle_(4)
-    new_activity.setTitle_("New Activity")
-    new_activity.setTarget_(app.delegate())
-    new_activity.setAction_("newActivity:")
-
-    quit_app = NSButton.alloc().initWithFrame_(((10.0, 30.0), (230.0, 25.0)))
-    win.contentView().addSubview_(quit_app)
-    quit_app.setBezelStyle_(4)
-    quit_app.setTitle_("Quit App")
-    quit_app.setTarget_(app.delegate())
-    quit_app.setAction_("quitApp:")
-
-    # Set Cormorant font for buttons
-    font_manager = NSFontManager.sharedFontManager()
-    Cormorant_font = font_manager.fontWithFamily_traits_weight_size_("Cormorant", 0, 5, 18.0)
-    new_activity.setFont_(Cormorant_font)
-    quit_app.setFont_(Cormorant_font)
-
-    beep = NSSound.alloc()
-    beep.initWithContentsOfFile_byReference_("/System/Library/Sounds/Tink.Aiff", 1)
-    new_activity.setSound_(beep)
-
-    win.display()
-    win.orderFrontRegardless()
-
-    AppHelper.runEventLoop()
+def task_done():
+    pass
 
 
-if __name__ == "__main__":
-    main()
+def countup():
+    minutes = 0
+    seconds = 0
+    print(f'{minutes} {seconds}')
+    while True:
+        countup_field.config(text=f"{minutes:02d}:{seconds:02d}")
+        window.update()
+        if seconds == 59:
+            minutes += 1
+            seconds = 0
+        else:
+            seconds += 1
+        window.after(1000)
+
+
+window = tk.Tk()
+window.title("Productivity!")
+window.geometry("400x300")
+window.attributes("-topmost", True)  # Set window to always on top
+
+# Create text field for text entry
+text_field = tk.Entry(window, width=15, font=("Garamond", 14))
+text_field.grid(row=2, column=0, padx=10, pady=10)
+
+# Create text field for number entry
+number_field = tk.Entry(window, width=7, font=("Garamond", 14))
+number_field.grid(row=2, column=1, padx=10, pady=10)
+
+# Create text field for result display
+result_field = tk.Text(window, width=23, height=3, font=("Garamond", 14))
+result_field.grid(row=1, column=0, columnspan=2, padx=10, pady=10)
+result_field.config(state=tk.DISABLED)
+
+# Create timer label for countdown
+timer_field = tk.Label(window, text="", font=("Garamond", 14, "bold"))
+timer_field.grid(row=3, column=0, padx=10, pady=10)
+
+# Create timer label for countup
+countup_field = tk.Label(window, text="", font=("Garamond", 14, "bold"))
+countup_field.grid(row=3, column=1, padx=10, pady=10)
+
+text_field.focus_set()
+
+# Bind Enter key press to the newActivity function
+window.bind('<Return>', lambda event: newActivity())
+
+style = ttk.Style()
+style.configure("TButton", font=("Cormorant", 18, "bold"))
+
+window.mainloop()
