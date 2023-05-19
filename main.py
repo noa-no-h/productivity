@@ -1,92 +1,118 @@
-#!/usr/bin/env pythonw
+import tkinter as tk
+from tkinter import ttk
+from datetime import datetime, timedelta
 
-from Cocoa import NSObject, NSApplication, NSApp, NSWindow, NSButton, NSSound, NSFontManager, NSTextField, \
-    NSTextFieldSquareBezel, NSFont
-from PyObjCTools import AppHelper
+activity_history = []
+history_to_print = []
 
-class AlwaysOnTopApp(NSObject):
-    def applicationDidFinishLaunching_(self, aNotification):
-        print("Hello, World!")
-
-    def newActivity_(self, sender):
+class Activity():
+    def __init__(self):
+        self.activity_name = activity_name_field.get()
+        self.minutes = int(minutes_field.get())
+        self.start_time = datetime.now().strftime("%H:%M")
+        unformatted_anticipated_time_end = datetime.now() + timedelta(minutes=self.minutes)
+        self.anticipated_time_end = unformatted_anticipated_time_end.strftime("%H:%M")
+        self.real_end_time = 0
         
-        print("New Activity button clicked!")
-        win = self.win
+        if activity_history:
+            activity_history[-1].add_previous_to_history_list()
 
-        # Create text field for text entry
-        text_field = NSTextField.alloc().initWithFrame_(((10.0, 100.0), (100.0, 22.0)))
-        text_field.setBezelStyle_(NSTextFieldSquareBezel)
-        text_field.setPlaceholderString_("Enter text")
-        text_field.setFont_(NSFont.fontWithName_size_("Garamond", 14))
-        text_field.setEditable_(True)
-        text_field.setSelectable_(True)
-        text_field.setBordered_(True)
-        text_field.setBezeled_(True)
+        activity_history.append(self)
+        self.add_activity_to_current()
 
-        # Create text field for number entry
-        number_field = NSTextField.alloc().initWithFrame_(((120.0, 100.0), (60.0, 22.0)))
-        number_field.setBezelStyle_(NSTextFieldSquareBezel)
-        number_field.setPlaceholderString_("Enter number")
-        number_field.setFont_(NSFont.fontWithName_size_("Garamond", 14))
-        number_field.setEditable_(True)
-        number_field.setSelectable_(True)
-        number_field.setBordered_(True)
-        number_field.setBezeled_(True)
+    def add_previous_to_history_list(self):
+        self.real_end_time = datetime.now().strftime("%H:%M")
+        start_datetime = datetime.strptime(self.start_time, "%H:%M")
+        end_datetime = datetime.strptime(self.real_end_time, "%H:%M")
+        self.actual_minutes = int((end_datetime - start_datetime).total_seconds() / 60.0)
 
-        win.contentView().addSubview_(text_field)
-        win.contentView().addSubview_(number_field)
+        activity_history_to_print = f"{self.activity_name} {self.minutes} minutes. Actual: {self.actual_minutes}. \nStarted {self.start_time}. Ended {self.real_end_time}"
+        history_to_print.append(activity_history_to_print)
+        history_field.config(state=tk.NORMAL)
+        history_field.delete("1.0", tk.END)
+        print(history_to_print)
+        for entry in history_to_print:
+            history_field.insert(tk.END, entry + "\n \n")
+        history_field.config(state=tk.DISABLED)
 
-         # Activate the Python application and bring it to the front
-        NSApp().activateIgnoringOtherApps_(True)
+    def add_activity_to_current(self):
+        #clear red circle
+        canvas.delete("all")
 
-        text_field.becomeFirstResponder()
+        current_activity_field.config(state=tk.NORMAL)
+        current_activity_field.delete("1.0", tk.END)
+        current_activity_field.insert(tk.END, f"{self.activity_name} {self.minutes} minutes.\nStarted {self.start_time}. Ends {self.anticipated_time_end}")
+        current_activity_field.config(state=tk.DISABLED)
 
-    def quitApp_(self, sender):
-        NSApp().terminate_(sender)
+        counters(self.minutes)
 
+        activity_name_field.delete(0, tk.END)
+        minutes_field.delete(0, tk.END)
+        activity_name_field.focus_set()
 
-def main():
-    app = NSApplication.sharedApplication()
-    delegate = AlwaysOnTopApp.alloc().init()
-    NSApp().setDelegate_(delegate)
+def draw_red_circle():
+    circle = canvas.create_oval(5, 10, 25, 30, fill="red")
 
-    win = NSWindow.alloc()
-    frame = ((200.0, 300.0), (250.0, 160.0))
-    win.initWithContentRect_styleMask_backing_defer_(frame, 15, 2, 0)
-    win.setTitle_("AlwaysOnTopApp")
-    win.setLevel_(3)  # floating window
+window = tk.Tk()
+window.title("Productivity!")
+window.geometry("160x300")
+window.attributes("-topmost", True)  # Set window to always on top
 
-    delegate.win = win  # Set win as an attribute of the delegate
-    
-    new_activity = NSButton.alloc().initWithFrame_(((10.0, 10.0), (230.0, 25.0)))
-    win.contentView().addSubview_(new_activity)
-    new_activity.setBezelStyle_(4)
-    new_activity.setTitle_("New Activity")
-    new_activity.setTarget_(app.delegate())
-    new_activity.setAction_("newActivity:")
+# Create text field for text entry
+activity_name_field = tk.Entry(window, width=13, font=("Cormorant", 12))
+activity_name_field.grid(row=3, column=0, padx=1, pady=(0, 1))
 
-    quit_app = NSButton.alloc().initWithFrame_(((10.0, 30.0), (230.0, 25.0)))
-    win.contentView().addSubview_(quit_app)
-    quit_app.setBezelStyle_(4)
-    quit_app.setTitle_("Quit App")
-    quit_app.setTarget_(app.delegate())
-    quit_app.setAction_("quitApp:")
+# Create text field for number entry
+minutes_field = tk.Entry(window, width=3, font=("Cormorant", 12))
+minutes_field.grid(row=3, column=1, padx=(0, 1), pady=(0, 1))
 
-    # Set Cormorant font for buttons
-    font_manager = NSFontManager.sharedFontManager()
-    Cormorant_font = font_manager.fontWithFamily_traits_weight_size_("Cormorant", 0, 5, 18.0)
-    new_activity.setFont_(Cormorant_font)
-    quit_app.setFont_(Cormorant_font)
+# Create text field for result display
+current_activity_field = tk.Text(window, width=20, height=3, font=("Cormorant", 12))
+current_activity_field.grid(row=1, column=0, columnspan=2, padx=(0, 1), pady=(0, 1))
+current_activity_field.config(state=tk.DISABLED)
 
-    beep = NSSound.alloc()
-    beep.initWithContentsOfFile_byReference_("/System/Library/Sounds/Tink.Aiff", 1)
-    new_activity.setSound_(beep)
+# Create canvas for red circle
+canvas = tk.Canvas(window, width=40, height=40)
+canvas.grid(row=2, column=1, padx=1, pady=(0, 1))
 
-    win.display()
-    win.orderFrontRegardless()
+# Create history field
+history_field = tk.Text(window, width=25, height=15, font=("Cormorant", 12))
+history_field.grid(row=4, column=0, columnspan=2, padx=1, pady=(0, 1))
+history_field.config(state=tk.DISABLED)
 
-    AppHelper.runEventLoop()
+activity_name_field.focus_set()
 
+# Bind Enter key press to the newActivity function
+window.bind('<Return>', lambda event: Activity())
 
-if __name__ == "__main__":
-    main()
+style = ttk.Style()
+style.configure("TButton", font=("Cormorant", 18))
+
+# Create timer label for countdown and countup
+timer_field = tk.Label(window, text="", font=("Cormorant", 15))
+timer_field.grid(row=2, column=0, padx=1, pady=(0, 1))
+
+def counters(minutes):
+    countdown_seconds = 0
+    countup_seconds = 0
+    countdown_minutes = minutes
+    countup_minutes = 0
+    while countdown_minutes >= 0:
+        timer_field.config(text=f"{countdown_minutes:02d}:{countdown_seconds:02d} {countup_minutes:02d}:{countup_seconds:02d}")
+        window.update()
+        if countup_seconds == 0:
+            if countdown_minutes != 0:
+                countdown_minutes -= 1
+                countdown_seconds = 59
+        else:
+            countdown_seconds -= 1
+        if countup_seconds == 59:
+            countup_minutes += 1
+            countup_seconds = 0
+        else:
+            countup_seconds += 1
+        if countdown_minutes == 0 and countdown_seconds == 0:
+            draw_red_circle()
+        window.after(1000)
+        
+window.mainloop()
