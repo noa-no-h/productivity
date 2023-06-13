@@ -9,6 +9,7 @@ import tkinter as tk
 from tkinter import ttk
 from datetime import datetime, timedelta
 import time
+import math
 
 activity_history = []
 history_to_print = []
@@ -19,10 +20,46 @@ def draw_red_circle():
 def draw_unfilled_circle():
     circle = canvas.create_oval(5, 10, 25, 30, fill="white")
 
+
+window = tk.Tk()
+window.title("Productivity!")
+window.geometry("111x200")
+window.attributes("-topmost", True)  # Set window to always on top
+window.configure(background='white')
+
+# Create text field for text entry
+activity_name_field = tk.Entry(window, width=13, font=("Cormorant", 11), highlightthickness=0, relief='ridge')
+activity_name_field.grid(row=3, column=0, sticky=tk.NSEW, padx=(0, 1), pady=(0, 1))
+
+# Create text field for number entry
+minutes_field = tk.Entry(window, width=3, font=("Cormorant", 12), highlightthickness=0, relief='ridge')
+minutes_field.grid(row=3, column=1, sticky=tk.W, padx=(0, 1), pady=(0, 1))
+
+# Create text field for result display
+current_activity_field = tk.Text(window, width=13, height=2.5, font=("Cormorant", 12), highlightthickness=0, relief='ridge')
+current_activity_field.grid(row=0, column=0, rowspan=2, columnspan=2, padx=0, pady=0)
+current_activity_field.config(state=tk.DISABLED)
+
+# Create canvas for red circle
+canvas = tk.Canvas(window, width=40, height=40, highlightthickness=0, relief='ridge')
+canvas.grid(row=2, column=1, sticky=tk.NW, padx=0, pady=0)
+canvas.configure(background='white')
+
 class Activity():
-    def __init__(self):
-        self.activity_name = activity_name_field.get()
-        self.minutes = int(minutes_field.get())
+    def __init__(self, activity_name=None, minutes=None):
+        if activity_name is None:
+            print(f'{activity_name_field.get()=}')
+            self.activity_name = activity_name_field.get()
+        else:
+            self.activity_name = activity_name
+        if minutes is None:
+            print(f'{minutes_field.get()=}')
+            self.minutes = int(minutes_field.get())
+        else:
+            self.minutes = minutes
+        print(f'{self.activity_name=} {self.minutes=}')
+        #self.activity_name = activity_name
+        #self.minutes = minutes
         self.start_time = datetime.now()
         self.formatted_start_time = datetime.now().strftime("%H:%M")
         self.anticipated_time_end = datetime.now() + timedelta(minutes=self.minutes)
@@ -90,36 +127,30 @@ class Activity():
         minutes_field.delete(0, tk.END)
         activity_name_field.focus_set()
 
+def history_field_clicked(event):
+    index = history_field.index("@%s,%s" % (event.x, event.y))
+    line_num = int(index.split(".")[0])
+    print(f"{index=} You clicked on line {line_num}")
+    index_in_history_list = -math.ceil(line_num/4) - 1
+    print(f'{index_in_history_list=}')
+    activity = activity_history[index_in_history_list]
+    Activity(activity_name = activity.activity_name, minutes = activity.minutes)
+    print(f'{activity.activity_name=} {activity.minutes=}')
 
+    activity_name_field.config(state=tk.NORMAL)
+    activity_name_field.delete(0,tk.END)
+    activity_name_field.insert(0,activity.activity_name)
 
-window = tk.Tk()
-window.title("Productivity!")
-window.geometry("111x200")
-window.attributes("-topmost", True)  # Set window to always on top
-window.configure(background='white')
-
-# Create text field for text entry
-activity_name_field = tk.Entry(window, width=13, font=("Cormorant", 11), highlightthickness=0, relief='ridge')
-activity_name_field.grid(row=3, column=0, sticky=tk.NSEW, padx=(0, 1), pady=(0, 1))
-
-# Create text field for number entry
-minutes_field = tk.Entry(window, width=3, font=("Cormorant", 12), highlightthickness=0, relief='ridge')
-minutes_field.grid(row=3, column=1, sticky=tk.W, padx=(0, 1), pady=(0, 1))
-
-# Create text field for result display
-current_activity_field = tk.Text(window, width=13, height=2.5, font=("Cormorant", 12), highlightthickness=0, relief='ridge')
-current_activity_field.grid(row=0, column=0, rowspan=2, columnspan=2, padx=0, pady=0)
-current_activity_field.config(state=tk.DISABLED)
-
-# Create canvas for red circle
-canvas = tk.Canvas(window, width=40, height=40, highlightthickness=0, relief='ridge')
-canvas.grid(row=2, column=1, sticky=tk.NW, padx=0, pady=0)
-canvas.configure(background='white')
+    minutes_field.config(state=tk.NORMAL)
+    minutes_field.delete(0,tk.END)
+    minutes_field.insert(0,activity.minutes)
 
 # Create history field
 history_field = tk.Text(window, width=20, height=15, font=("Cormorant", 11), highlightthickness=0, relief='ridge')
 history_field.grid(row=4, column=0, columnspan=2, rowspan=2, padx=0, pady=0)
-history_field.config(state=tk.DISABLED)
+history_field.config(state=tk.NORMAL)
+history_field.bind("<Button-1>", history_field_clicked)
+
 
 activity_name_field.focus_set()
 
