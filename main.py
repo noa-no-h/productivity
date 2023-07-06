@@ -11,6 +11,10 @@ from datetime import datetime, timedelta
 import time
 import math
 import gspread
+import subprocess
+
+#import Quartz
+#import AppKit
 
 gc = gspread.service_account(filename='credentials.json')
 to_do_sh = gc.open("to do")
@@ -45,7 +49,7 @@ minutes_field = tk.Entry(window_on_top, width=3, font=("Cormorant", 12), highlig
 minutes_field.grid(row=3, column=1, sticky=tk.W, padx=(0, 1), pady=(0, 1))
 
 # Create text field for result display
-current_activity_field = tk.Text(window_on_top, width=13, height=2.5, font=("Cormorant", 12), highlightthickness=0, relief='ridge')
+current_activity_field = tk.Text(window_on_top, width=13, height=3.5, font=("Cormorant", 11), highlightthickness=0, relief='ridge')
 current_activity_field.grid(row=0, column=0, rowspan=2, columnspan=2, padx=0, pady=0)
 current_activity_field.config(state=tk.DISABLED)
 
@@ -136,6 +140,7 @@ class Activity():
         minutes_field.delete(0, tk.END)
         activity_name_field.focus_set()
 
+
 def history_field_clicked(event):
     index = history_field.index("@%s,%s" % (event.x, event.y))
     line_num = int(index.split(".")[0])
@@ -143,7 +148,6 @@ def history_field_clicked(event):
     index_in_history_list = -math.ceil(line_num/4) - 1
     print(f'{index_in_history_list=}')
     activity = activity_history[index_in_history_list]
-    Activity(activity_name = activity.activity_name, minutes = activity.minutes)
     print(f'{activity.activity_name=} {activity.minutes=}')
 
     activity_name_field.delete(0,tk.END)
@@ -157,6 +161,9 @@ def history_field_clicked(event):
     # Update the fields immediately
     activity_name_field.update()
     minutes_field.update()
+
+    Activity(activity_name = activity.activity_name, minutes = activity.minutes)
+
 
 
 # Create history field
@@ -230,6 +237,17 @@ def create_activity_from_task(task_name, estimated_time):
     if estimated_time == '':
         estimated_time = '1' 
     estimated_time = int(estimated_time)
+    
+    activity_name_field.delete(0,tk.END)
+    activity_name_field.insert(0,task_name)
+    
+    minutes_field.delete(0,tk.END)
+    minutes_field.insert(0,str(estimated_time))
+
+    # Update the fields immediately
+    activity_name_field.update()
+    minutes_field.update()
+
     # Create a new Activity with the task's name and estimated time
     Activity(activity_name=task_name, minutes=estimated_time)
 
@@ -238,5 +256,15 @@ def bring_to_front(event):
 
 window_on_top.bind('<FocusIn>', bring_to_front)
 
+#make it follow me from desktop to desktop
+script = '''
+tell application "System Events"
+    tell process "Productivity"
+        set value of attribute "AXSpacesBehavior" to 0
+    end tell
+end tell
+'''
+
+subprocess.run(['osascript', '-e', script])
 
 window_on_top.mainloop()
