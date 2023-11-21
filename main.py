@@ -3,7 +3,7 @@
 # offer items from todo list to click on and do
 # save history in a new google spreadsheet
 # beautiful graphic design https://github.com/ParthJadhav/Tkinter-Designer https://www.youtube.com/watch?v=Qf5cnJDSolE&t=342s
-#white on black switch to black on white when red circle
+#black on black switch to black on black when red circle
 
 import tkinter as tk
 from tkinter import ttk
@@ -24,44 +24,56 @@ activity_history = []
 history_to_print = []
 
 def draw_red_circle():
-    circle = canvas.create_oval(5, 10, 25, 30, fill="red")
+    circle = canvas.create_oval(0, 5, 15, 20, fill="red")
 
 def draw_unfilled_circle():
-    circle = canvas.create_oval(5, 10, 25, 30, fill="white")
+    circle = canvas.create_oval(0, 5, 15, 20, fill="black")
 
 window_on_top = tk.Tk()
+window_on_top.overrideredirect(1)
+window_on_top.overrideredirect(0)
+#window_on_top.wm_attributes('-type', 'splash')
 window_on_top.title("Productivity!")
-window_on_top.geometry("111x200")
+window_on_top.geometry("111x200+9+40")
 window_on_top.attributes("-topmost", True)  # Set window_on_top to always on top
-window_on_top.configure(background='white')
+window_on_top.configure(background='black')
+#no title bar
 
+"""
 window_list_of_tasks = tk.Toplevel(window_on_top)
 window_list_of_tasks.title("List of Tasks!")
-window_list_of_tasks.geometry("200x1600+111+0")
-window_list_of_tasks.configure(background='white')
+window_list_of_tasks.geometry("200x1600+150+40")
+window_list_of_tasks.configure(background='black')"""
+#no title bar
+#window_list_of_tasks.overrideredirect(1)
+#window_list_of_tasks.overrideredirect(True)
+
 
 # Create text field for text entry
-activity_name_field = tk.Entry(window_on_top, width=13, font=("Cormorant", 11), highlightthickness=0, relief='ridge')
+activity_name_field = tk.Entry(window_on_top, width=13, font=("Futura", 10), highlightthickness=0, relief='ridge')
 activity_name_field.grid(row=3, column=0, sticky=tk.NSEW, padx=(0, 1), pady=(0, 1))
+activity_name_field.configure(background='black')
 
 # Create text field for number entry
-minutes_field = tk.Entry(window_on_top, width=3, font=("Cormorant", 12), highlightthickness=0, relief='ridge')
+minutes_field = tk.Entry(window_on_top, font=("Futura", 10), highlightthickness=0, relief='ridge')
 minutes_field.grid(row=3, column=1, sticky=tk.W, padx=(0, 1), pady=(0, 1))
+minutes_field.configure(background='black')
 
 # Create text field for result display
-current_activity_field = tk.Text(window_on_top, width=13, height=3.5, font=("Cormorant", 11), highlightthickness=0, relief='ridge')
-current_activity_field.grid(row=0, column=0, rowspan=2, columnspan=2, padx=0, pady=0)
+current_activity_field = tk.Text(window_on_top, width=13, height=3.5, font=("Futura", 10), highlightthickness=0, relief='ridge')
+current_activity_field.grid(row=0, column=0, sticky=tk.W, rowspan=2, columnspan=2, padx=(0,1), pady=(0,1))
 current_activity_field.config(state=tk.DISABLED)
+current_activity_field.configure(background='black')
 
 # Create canvas for red circle
-canvas = tk.Canvas(window_on_top, width=40, height=40, highlightthickness=0, relief='ridge')
+canvas = tk.Canvas(window_on_top, width=20, height=20, highlightthickness=0, relief='ridge')
 canvas.grid(row=2, column=1, sticky=tk.NW, padx=0, pady=0)
-canvas.configure(background='white')
+canvas.configure(background='black')
 
 class Activity():
     def __init__(self, activity_name=None, minutes=None):
         if activity_name is None:
-            print(f'{activity_name_field.get()=}')
+            #print(f'{activity_name_field.get()=}')
             self.activity_name = activity_name_field.get()
         else:
             self.activity_name = activity_name
@@ -70,7 +82,7 @@ class Activity():
             self.minutes = int(minutes_field.get())
         else:
             self.minutes = minutes
-        print(f'{self.activity_name=} {self.minutes=}')
+        #print(f'{self.activity_name=} {self.minutes=}')
         #self.activity_name = activity_name
         #self.minutes = minutes
         self.start_time = datetime.now()
@@ -97,7 +109,7 @@ class Activity():
         history_to_print.append(activity_history_to_print)
         history_field.config(state=tk.NORMAL)
         history_field.delete("1.0", tk.END)
-        print(history_to_print)
+        #print(history_to_print)
         for entry in reversed(history_to_print):
             history_field.insert(tk.END, entry + "\n \n")
         history_field.config(state=tk.DISABLED)
@@ -144,16 +156,16 @@ class Activity():
 def history_field_clicked(event):
     index = history_field.index("@%s,%s" % (event.x, event.y))
     line_num = int(index.split(".")[0])
-    print(f"{index=} You clicked on line {line_num}")
+    #print(f"{index=} You clicked on line {line_num}")
     index_in_history_list = -math.ceil(line_num/4) - 1
-    print(f'{index_in_history_list=}')
+    #print(f'{index_in_history_list=}')
     activity = activity_history[index_in_history_list]
-    print(f'{activity.activity_name=} {activity.minutes=}')
+    #print(f'{activity.activity_name=} {activity.minutes=}')
 
     activity_name_field.delete(0,tk.END)
-    print("Activity name deleted")  # Debug print
+    #print("Activity name deleted")  # Debug print
     activity_name_field.insert(0,activity.activity_name)
-    print("Activity name inserted")  # Debug print
+    #print("Activity name inserted")  # Debug print
 
     minutes_field.delete(0,tk.END)
     minutes_field.insert(0,activity.minutes)
@@ -167,8 +179,8 @@ def history_field_clicked(event):
 
 
 # Create history field
-history_field = tk.Text(window_on_top, width=20, height=15, font=("Cormorant", 11), highlightthickness=0, relief='ridge')
-history_field.grid(row=4, column=0, columnspan=2, rowspan=2, padx=0, pady=0)
+history_field = tk.Text(window_on_top, width=20, height=15, font=("Futura", 10), highlightthickness=0, relief='ridge')
+history_field.grid(row=4, column=0, columnspan=2, rowspan=2, sticky=tk.W, padx=0, pady=0)
 history_field.config(state=tk.NORMAL)
 history_field.bind("<Button-1>", history_field_clicked)
 
@@ -179,15 +191,16 @@ activity_name_field.focus_set()
 window_on_top.bind('<Return>', lambda event: Activity())
 
 # Create timer label for countdown and countup
-timer_field = tk.Label(window_on_top, text="", font=("Cormorant", 15))
+timer_field = tk.Label(window_on_top,text="", font=("Futura", 10))
 timer_field.grid(row=2, column=0, sticky=tk.NW, padx=0, pady=0)
-timer_field.configure(background='white')
+timer_field.configure(background='black')
 
 
 # Fetch tasks from the Google Spreadsheet
 tasks = to_do_worksheet.get_all_values()
 
 # Create a list of tasks in window_list_of_tasks
+"""
 def create_task_buttons():
     global tasks
     global estimated_time_fields
@@ -196,7 +209,7 @@ def create_task_buttons():
     estimated_time_fields.clear()
 
     for i, task in enumerate(tasks[1:]):
-        print(task)
+        #print(task)
         task_name = task[2]
         label = task[1]
 
@@ -205,7 +218,7 @@ def create_task_buttons():
         estimated_time_field.grid(row=i, column=0, sticky=tk.W)
         estimated_time_fields.append(estimated_time_field)  # Add the Entry field to the list
 
-        task_button = tk.Button(window_list_of_tasks, text=label + " " + task_name, background='white')
+        task_button = tk.Button(window_list_of_tasks, text=label + " " + task_name, background='black')
         task_button.grid(row=i, column=1, sticky=tk.W)  # Change the column to 1 to place the button next to the Entry field
 
         # Bind a click event to the task button
@@ -255,6 +268,7 @@ def bring_to_front(event):
     window_list_of_tasks.lift()
 
 window_on_top.bind('<FocusIn>', bring_to_front)
+"""
 
 #make it follow me from desktop to desktop
 script = '''
